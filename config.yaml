@@ -1,0 +1,6 @@
+tag separator: "_"
+tag types:
+    author: ["{","}"]
+    character: ["[","]"]
+    special: ["(",")"]
+    # general tags have no brackets
