@@ -14,9 +14,6 @@ def main():
     MTags = TagManager()
     tagger = FilenameTagger()
 
-    # maybe add loading bar?
-    MTags.tags = tagger.parse_tags(MImages)
-
     # prepare tag descriptions
     comboboxTags = getTagTypesSummary(tagger.tagtypes)
     options = list(comboboxTags.keys())
@@ -28,10 +25,10 @@ def main():
             ]
 
     rcolumn_layout = [
-        [sg.Listbox(key='tags', values=MTags.tags[MImages.current()],
+        [sg.Listbox(key='tags', values=MTags.get_tags(MImages.current()),
                     expand_y=True, expand_x=True)],
         [sg.Text("Tag:"), sg.Input(key="new_tag_value"), sg.Text("Type:"), sg.Combo(
-            options, default_value=options[0])],
+            options, default_value=options[0], key='new_tag_type')],
         [sg.Button("Add tag", key='add_tag'), sg.Button(
             "Remove selected tag", key='remove_tag')]
     ]
@@ -52,21 +49,27 @@ def main():
                 print("Wrote tags")
             break
         elif event == "Prev":
-            window['img'].update(MImages.prev().getvalue())
-            window['tags'].update(MTags.tags[MImages.current()])
+            MImages.prev()
+            window['img'].update(MImages.currentBytes().getvalue())
+            window['tags'].update(list(MTags.get_tags(MImages.current())))
         elif event == "Next":
-            window['img'].update(MImages.next().getvalue())
-            window['tags'].update(MTags.tags[MImages.current()])
+            MImages.next()
+            window['img'].update(MImages.currentBytes().getvalue())
+            window['tags'].update(list(MTags.get_tags(MImages.current())))
         elif event == "add_tag":
             print("Adding:", window['new_tag_value'])
+            value = window['new_tag_value'].get()
+            type = window['new_tag_type'].get()
+            MTags.add_tag(MImages.current(), Tag(value, type))
+            window['tags'].update(list(MTags.get_tags(MImages.current())))
         elif event == "Filenames to tags... (Merge)":
-            for image in ImageManager:
-                tags = tagger.parse_tags(MImages)
-                MTags.merge_tags(tags)
+            tags = tagger.parse_tags(MImages)
+            MTags.merge_tags(tags)
+            window['tags'].update(list(MTags.get_tags(MImages.current())))
         elif event == "Filenames to tags... (Overwrite)":
-            for image in ImageManager:
-                tags = tagger.parse_tags(MImages)
-                MTags.overwrite_tags(tags)
+            tags = tagger.parse_tags(MImages)
+            MTags.overwrite_tags(tags)
+            window['tags'].update(list(MTags.get_tags(MImages.current())))
         print('You entered ', event, values)
 
     window.close()
