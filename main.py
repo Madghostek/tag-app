@@ -7,17 +7,8 @@ from managers import *
 from filenameTagger import *
 
 
-def main():
-
-    # setup managers
-    MImages = ImageManager(os.getcwd())
-    MTags = TagManager()
-    tagger = FilenameTagger()
-
-    # prepare tag descriptions
-    comboboxTags = getTagTypesSummary(tagger.tagtypes)
-    options = list(comboboxTags.keys())
-
+def buildWindow(options, taglist, imgwidget, block=False):
+    # Layout
     menu = [["File", ["Load tag scheme..."]],
             ["Tools", [
                 "Filenames to tags... (Merge)", "Filenames to tags... (Overwrite)"]],
@@ -25,29 +16,68 @@ def main():
             ]
 
     rcolumn_layout = [
-        [sg.Listbox(key='tags', values=MTags.get_tags(MImages.current()),
+        [sg.Listbox(key='tags', values=taglist,
                     expand_y=True, expand_x=True)],
         [sg.Text("Tag:"), sg.Input(key="new_tag_value"), sg.Text("Type:"), sg.Combo(
             options, default_value=options[0], key='new_tag_type')],
         [sg.Button("Add tag", key='add_tag'), sg.Button(
             "Remove selected tag", key='remove_tag')]
     ]
-
-    image_display = [[sg.Image(MImages.currentBytes().getvalue(
-    ), key='img'), sg.Column(rcolumn_layout, expand_y=True)]]
-    navbar = [sg.Button("Prev"), sg.Button("Next"), sg.Text(
-        os.getcwd()), sg.FolderBrowse("Change")]
+    image_display = [[imgwidget, sg.Column(rcolumn_layout, expand_y=True)]]
+    navbar = [sg.Button("Prev"), sg.Button("Next"), sg.InputText(
+        os.getcwd(), enable_events=True, disabled=True, key="folder_browse"), sg.FolderBrowse("Change")]
 
     layout = [[sg.Menu(menu)], navbar, [sg.Frame('Display', image_display)]]
-    window = sg.Window('Tag app', layout, resizable=True)
+    window = sg.Window('Tag app', layout, resizable=True,
+                       enable_close_attempted_event=True)
 
+    return window
+
+
+def windowInit(MImages, MTags, tagger):
+
+    options = list(tagger.tagtypes.keys())
+    options.append("default")
+
+    first_tags = ["No images in this directory"] if MImages.err else MTags.get_tags(
+        MImages.current())
+
+    first_image = sg.Image("errorimg") if MImages.err else sg.Image(
+        MImages.currentBytes().getvalue(), key='img')
+    return buildWindow(options, first_tags, first_image, MImages.err)
+
+
+def main():
+
+    # setup managers
+    MImages = ImageManager()
+    if MImages.err:
+        print("No images found")
+    MTags = TagManager(os.getcwd())
+    tagger = FilenameTagger()
+
+    window = windowInit(MImages, MTags, tagger)
+
+    # Event loop
     while True:
         event, values = window.read()
-        if event == sg.WIN_CLOSED:  # if user closes window or clicks cancel
-            if sg.popup_yes_no("Overwrite tags.json?") == 'Yes':
+        if event == sg.WIN_CLOSED:
+            break
+        elif event == sg.WINDOW_CLOSE_ATTEMPTED_EVENT or event == 'Exit':
+            if MTags.stale and sg.popup_yes_no("Overwrite tags.json?") == 'Yes':
                 MTags.save_tags_file()
                 print("Wrote tags")
             break
+        elif event == "folder_browse":
+            path = window['folder_browse'].get()
+            MImages = ImageManager(path)
+            if MImages.err:
+                print("No images found")
+            MTags = TagManager(path)
+
+            # Rebuild window
+            window.close()
+            window = windowInit(MImages, MTags, tagger)
         elif event == "Prev":
             MImages.prev()
             window['img'].update(MImages.currentBytes().getvalue())
@@ -56,12 +86,19 @@ def main():
             MImages.next()
             window['img'].update(MImages.currentBytes().getvalue())
             window['tags'].update(list(MTags.get_tags(MImages.current())))
+
         elif event == "add_tag":
             print("Adding:", window['new_tag_value'])
             value = window['new_tag_value'].get()
             type = window['new_tag_type'].get()
             MTags.add_tag(MImages.current(), Tag(value, type))
             window['tags'].update(list(MTags.get_tags(MImages.current())))
+        elif event == "remove_tag":
+            selected = window['tags'].get()
+            print("Removing:", selected)
+            MTags.remove_tags(MImages.current(), selected)
+            window['tags'].update(list(MTags.get_tags(MImages.current())))
+
         elif event == "Filenames to tags... (Merge)":
             tags = tagger.parse_tags(MImages)
             MTags.merge_tags(tags)
