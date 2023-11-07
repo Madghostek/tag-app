@@ -124,7 +124,8 @@ class TagManager():
         print(f"Saved tags to '{self._workingDir+tagsname}'")
         self.stale = False
 
-    def add_tag(self, targetImg, tag: Tag):
+    def add_tag(self, targetImg, tag_value, tag_type):
+        tag = Tag(tag_value, tag_type)
         if targetImg.hash in self._tags:
             self._tags[targetImg.hash].add(tag)
         else:

@@ -2,10 +2,9 @@ import hashlib
 
 
 class Tag():
-    def __init__(self, value, type="default", typeOrder=0):
+    def __init__(self, value, type="default"):
         self.value = value
         self.type = type
-        self.typeOrder = typeOrder
 
     def __repr__(self):
         return f"({self.type}) {self.value}" if self.type != "default" else str(self.value)

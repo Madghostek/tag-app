@@ -23,7 +23,7 @@ class FilenameTagger():
         """
         with open(path+"config.yaml", "r") as conf:
             self._config_raw = yaml.safe_load(conf)
-        self.tagtypes = self._config_raw['tag types']
+        self.tagtypes = self._config_raw['tag types']  # this is a dict of {brackets, order}
         self.separator = self._config_raw['tag separator']
 
     def filename_to_tags(self, fname):
@@ -48,7 +48,7 @@ class FilenameTagger():
     def tags_to_filename(self, taglist: list[Tag], sortTags=True):
         fname = []
         if sortTags:
-            taglist.sort(key=lambda tag: tag.typeOrder)
+            taglist.sort(key=lambda tag: self.get_tag_order(tag), reverse=True)
         for tag in taglist:
             try:
                 brackets = self.tagtypes[tag.type]['brackets']
@@ -60,6 +60,12 @@ class FilenameTagger():
     def parse_tags(self, images: list[Img]):
         return {image: self.filename_to_tags(
             image.fname) for image in images}
+    
+    def get_tag_order(self, tag: Tag):
+        try:
+            return self.tagtypes[tag.type]['order']
+        except KeyError: 
+            return 0
 
 
 def getTagTypesSummary(tagtypes):

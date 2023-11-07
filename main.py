@@ -1,5 +1,7 @@
 #!/usr/bin/python3
 
+# mostly windowing logic, but slightly coupled with what the app is meant for
+
 import PySimpleGUI as sg
 import os
 
@@ -94,7 +96,7 @@ def main():
             print("Adding:", window['new_tag_value'])
             value = window['new_tag_value'].get()
             type = window['new_tag_type'].get()
-            MTags.add_tag(MImages.current(), Tag(value, type))
+            MTags.add_tag(MImages.current(), value, type)
             window['tags'].update(list(MTags.get_tags(MImages.current())))
         elif event == "remove_tag":
             selected = window['tags'].get()
