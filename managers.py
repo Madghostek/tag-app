@@ -102,7 +102,7 @@ class ImageManager():
 
         images = []
         for ext in self.supported_images:
-            images.extend(Img(path+"/"+img) for img in os.listdir(path)
+            images.extend(Img(img) for img in os.listdir(path)
                           if img.endswith(ext) and r.match(img))
 
         self.collection = images

@@ -1,0 +1,26 @@
+{
+    "e5e82fef8f2893c0aa7079796d623588": [
+        {
+            "type": "default",
+            "value": "something"
+        },
+        {
+            "type": "meta",
+            "value": "mem"
+        }
+    ],
+    "2e9a43f5613fd02578eb43a0df4d6e8c": [
+        {
+            "type": "author",
+            "value": "unknown"
+        },
+        {
+            "type": "default",
+            "value": "mem"
+        },
+        {
+            "type": "character",
+            "value": "human"
+        }
+    ]
+}

@@ -25,7 +25,7 @@ def buildWindow(options, taglist, imgwidget, block=False):
     ]
     image_display = [[imgwidget, sg.Column(rcolumn_layout, expand_y=True)]]
     navbar = [sg.Button("Prev"), sg.Button("Next"), sg.InputText(
-        os.getcwd(), enable_events=True, disabled=True, key="folder_browse"), sg.FolderBrowse("Change")]
+        os.getcwd(), enable_events=True, disabled=True, key="folder_browse"), sg.FolderBrowse("Change"), sg.Text("Nothing to save", key="status_text")]
 
     layout = [[sg.Menu(menu)], navbar, [sg.Frame('Display', image_display)]]
     window = sg.Window('Tag app', layout, resizable=True,
