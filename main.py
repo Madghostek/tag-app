@@ -6,6 +6,9 @@ import os
 from managers import *
 from filenameTagger import *
 
+import logging
+logging.basicConfig(level=logging.INFO)
+
 
 def buildWindow(options, taglist, imgwidget, block=False):
     # Layout
@@ -78,14 +81,13 @@ def main():
             # Rebuild window
             window.close()
             window = windowInit(MImages, MTags, tagger)
-        elif event == "Prev":
-            MImages.prev()
-            window['img'].update(MImages.currentBytes().getvalue())
-            window['tags'].update(list(MTags.get_tags(MImages.current())))
-        elif event == "Next":
-            MImages.next()
-            window['img'].update(MImages.currentBytes().getvalue())
-            window['tags'].update(list(MTags.get_tags(MImages.current())))
+        elif event == "Prev" or event == "Next":
+            try:
+                MImages.prev() if event == "Prev" else MImages.next()
+                window['img'].update(MImages.currentBytes().getvalue())
+                window['tags'].update(list(MTags.get_tags(MImages.current())))
+            except NoImagesException:
+                logging.info("Cannot move between images, because there are none.")
 
         elif event == "add_tag":
             print("Adding:", window['new_tag_value'])
@@ -107,7 +109,7 @@ def main():
             tags = tagger.parse_tags(MImages)
             MTags.overwrite_tags(tags)
             window['tags'].update(list(MTags.get_tags(MImages.current())))
-        print('You entered ', event, values)
+        logging.debug('You entered ', event, values)
 
     window.close()
 

@@ -5,6 +5,7 @@ import os
 import PIL.Image as Image
 
 from classes import Tag, Img
+from exceptions import NoImagesException
 
 
 class TagManager():
@@ -111,12 +112,19 @@ class ImageManager():
             self.err = True
 
     def next(self) -> Img:
-        self.index = (self.index+1) % len(self.collection)
-        return self.current()
+        try:
+            self.index = (self.index+1) % len(self.collection)
+            return self.current()
+        except ZeroDivisionError:
+            raise NoImagesException
 
     def prev(self) -> Img:
-        self.index = (self.index-1) % len(self.collection)
-        return self.current()
+        try:
+            self.index = (self.index-1) % len(self.collection)
+            return self.current()
+        except ZeroDivisionError:
+            raise NoImagesException
+        
 
     def currentBytes(self) -> io.BytesIO:
         bio = io.BytesIO()
