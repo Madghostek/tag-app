@@ -2,12 +2,16 @@ import hashlib
 
 
 class Tag():
-    def __init__(self, value, type="default"):
+    def __init__(self, value, type="default", typeOrder=0):
         self.value = value
         self.type = type
+        self.typeOrder = typeOrder
 
     def __repr__(self):
         return f"({self.type}) {self.value}" if self.type != "default" else str(self.value)
+    
+    def __str__(self):
+        return self.__repr__()
 
     def __eq__(self, other):
         return self.value == other.value and self.type == other.type

@@ -3,9 +3,63 @@ import io
 import json
 import os
 import PIL.Image as Image
+import logging
 
 from classes import Tag, Img
 from exceptions import NoImagesException
+
+from filenameTagger import FilenameTagger
+
+class ImageManager():
+    supported_images = ['png', 'jpg', 'jpeg', 'gif']
+    collection = []
+
+    def getAllImages(self,):
+        return self.collection
+
+    def __init__(self, path=".", pattern=""):
+        self.err = False
+        self.index = 0
+
+        r = re.compile(pattern)
+
+        images = []
+        for ext in self.supported_images:
+            images.extend(Img(img) for img in os.listdir(path)
+                          if img.endswith(ext) and r.match(img))
+
+        self.collection = images
+
+        if len(self.collection) == 0:
+            self.err = True
+
+    def next(self) -> Img:
+        try:
+            self.index = (self.index+1) % len(self.collection)
+            return self.current()
+        except ZeroDivisionError:
+            raise NoImagesException
+
+    def prev(self) -> Img:
+        try:
+            self.index = (self.index-1) % len(self.collection)
+            return self.current()
+        except ZeroDivisionError:
+            raise NoImagesException
+        
+    def currentBytes(self) -> io.BytesIO:
+        bio = io.BytesIO()
+        print("Selecting", self.collection[self.index])
+        img = Image.open(self.collection[self.index].fname)
+        img.thumbnail((500, 500))
+        img.save(bio, format="PNG")
+        return bio
+
+    def current(self) -> Img:
+        return self.collection[self.index]
+
+    def __iter__(self):
+        return iter(self.collection)
 
 
 class TagManager():
@@ -43,6 +97,16 @@ class TagManager():
         print(f"Loaded tags from '{self._workingDir+tagsname}'")
         self.stale = False
         return tags
+    
+    def write_tags_to_filenames(self, imgManager: ImageManager, tagger: FilenameTagger):
+        """
+        Update filenames of all loaded images according to tagging scheme
+        """
+
+        for image in imgManager.getAllImages():
+            tags = self.get_tags(image)
+            fname = tagger.tags_to_filename(list(tags))
+            logging.debug("new image filename:"+fname)
 
     def save_tags_file(self, tagsname="tags.json"):
         tagjson = {}
@@ -90,52 +154,3 @@ class TagManager():
 
     def get_tags(self, targetImg) -> list:
         return self._tags[targetImg.hash] if targetImg.hash in self._tags else []
-
-
-class ImageManager():
-    supported_images = ['png', 'jpg', 'jpeg', 'gif']
-
-    def __init__(self, path=".", pattern=""):
-        self.err = False
-        self.index = 0
-
-        r = re.compile(pattern)
-
-        images = []
-        for ext in self.supported_images:
-            images.extend(Img(img) for img in os.listdir(path)
-                          if img.endswith(ext) and r.match(img))
-
-        self.collection = images
-
-        if len(self.collection) == 0:
-            self.err = True
-
-    def next(self) -> Img:
-        try:
-            self.index = (self.index+1) % len(self.collection)
-            return self.current()
-        except ZeroDivisionError:
-            raise NoImagesException
-
-    def prev(self) -> Img:
-        try:
-            self.index = (self.index-1) % len(self.collection)
-            return self.current()
-        except ZeroDivisionError:
-            raise NoImagesException
-        
-
-    def currentBytes(self) -> io.BytesIO:
-        bio = io.BytesIO()
-        print("Selecting", self.collection[self.index])
-        img = Image.open(self.collection[self.index].fname)
-        img.thumbnail((500, 500))
-        img.save(bio, format="PNG")
-        return bio
-
-    def current(self) -> Img:
-        return self.collection[self.index]
-
-    def __iter__(self):
-        return iter(self.collection)

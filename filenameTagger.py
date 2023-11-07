@@ -1,8 +1,7 @@
 import yaml
 import os
 
-from managers import ImageManager
-from classes import Tag
+from classes import Tag, Img
 
 
 class FilenameTagger():
@@ -46,9 +45,21 @@ class FilenameTagger():
 
         return tags
 
-    def parse_tags(self, MImages: ImageManager):
+    def tags_to_filename(self, taglist: list[Tag], sortTags=True):
+        fname = []
+        if sortTags:
+            taglist.sort(key=lambda tag: tag.typeOrder)
+        for tag in taglist:
+            try:
+                brackets = self.tagtypes[tag.type]['brackets']
+            except KeyError:
+                brackets = ['', '']  # no brackets
+            fname.append(brackets[0]+tag.value+brackets[1])
+        return self.separator.join(fname)
+
+    def parse_tags(self, images: list[Img]):
         return {image: self.filename_to_tags(
-            image.fname) for image in MImages}
+            image.fname) for image in images}
 
 
 def getTagTypesSummary(tagtypes):

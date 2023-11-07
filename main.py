@@ -7,12 +7,12 @@ from managers import *
 from filenameTagger import *
 
 import logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 
 def buildWindow(options, taglist, imgwidget, block=False):
     # Layout
-    menu = [["File", ["Load tag scheme..."]],
+    menu = [["File", ["Load tag scheme...", "Apply tag changes..."]],
             ["Tools", [
                 "Filenames to tags... (Merge)", "Filenames to tags... (Overwrite)"]],
             ["Help", ["About"]]
@@ -64,6 +64,7 @@ def main():
     # Event loop
     while True:
         event, values = window.read()
+        print("event", event)
         if event == sg.WIN_CLOSED:
             break
         elif event == sg.WINDOW_CLOSE_ATTEMPTED_EVENT or event == 'Exit':
@@ -109,7 +110,11 @@ def main():
             tags = tagger.parse_tags(MImages)
             MTags.overwrite_tags(tags)
             window['tags'].update(list(MTags.get_tags(MImages.current())))
-        logging.debug('You entered ', event, values)
+        elif event == "Apply tag changes...":
+            MTags.write_tags_to_filenames(MImages, tagger)
+
+        logging.debug(f'You entered {event}, {values}')
+
 
     window.close()
 
