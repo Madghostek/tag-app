@@ -15,7 +15,8 @@ class ImageManager():
     supported_images = ['png', 'jpg', 'jpeg', 'gif']
     collection = []
 
-    def getAllImages(self,):
+    # @TODO: make sure this isn't needed, because cool iter interface should work
+    def getAllImages(self):
         return self.collection
 
     def __init__(self, path=".", pattern=""):
@@ -61,6 +62,13 @@ class ImageManager():
 
     def __iter__(self):
         return iter(self.collection)
+    
+    def renameImage(self, image: Img, newName):
+        # rename in filesystem, but remember in logs for rollback
+        ext = os.path.splitext(image.fname)[1]
+        os.rename(image.fname, newName+ext)
+
+        image.fname = newName+ext
 
 
 class TagManager():
@@ -111,16 +119,29 @@ class TagManager():
         print(f"Loaded tags from '{self._workingDir+tagsname}'")
         self.stale = False
         return tags
-    
-    def write_tags_to_filenames(self, imgManager: ImageManager, tagger: FilenameTagger):
+
+    def write_tags_to_filenames(self, imgManager: ImageManager, tagger: FilenameTagger) -> bool:
         """
         Update filenames of all loaded images according to tagging scheme
-        """
 
-        for image in imgManager.getAllImages():
+        Returns amount of files changed
+        """
+        if not self.stale:
+            return 0
+
+        changes = {}
+        for image in imgManager:
             tags = self.get_tags(image)
             fname = tagger.tags_to_filename(list(tags))
-            logging.debug("new image filename:"+fname)
+            # save history in case of rollback
+            old = image.fname
+            imgManager.renameImage(image, fname)
+            if old != image.fname:
+                changes[image.hash] = {"old": old, "new": image.fname}
+        self.save_tags_file()  # sync the json as well
+        with open(self._workingDir+"/filename_changes.json", "w") as f:
+            json.dump(changes, f)
+        return len(changes)
 
     def save_tags_file(self, tagsname="tags.json"):
         tagjson = {}

@@ -61,10 +61,10 @@ def main():
     MTags = TagManager(os.getcwd())
     tagger = FilenameTagger()
     window = windowInit(MImages, MTags, tagger)
+
     # register a function to call, this function just gets tags of current image and places them into listbox
     # effectively refreshing it (it does not know to do that on its own)
     MTags.register_tag_change_callback(lambda: window['tags'].update(list(MTags.get_tags(MImages.current()))))
-
 
     # Event loop
     while True:
@@ -112,7 +112,11 @@ def main():
             tags = tagger.parse_tags(MImages)
             MTags.overwrite_tags(tags)
         elif event == "Apply tag changes...":
-            MTags.write_tags_to_filenames(MImages, tagger)
+            # omg walrus operator!!1!11
+            if filesChanged := MTags.write_tags_to_filenames(MImages, tagger):
+                sg.popup(f"Changed filenames of {filesChanged} files")
+            else:
+                sg.popup("There are no changes to apply")
 
         logging.debug(f'You entered {event}, {values}')
 
