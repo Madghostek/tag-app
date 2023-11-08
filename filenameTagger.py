@@ -35,7 +35,8 @@ class FilenameTagger():
         name, _ = os.path.splitext(fname)
         for tag in name.split(self.separator):
             # figure out if this tag matches a specific type
-            for tagtype, wraps in self.tagtypes.items():
+            for tagtype, taginfo in self.tagtypes.items():
+                wraps = taginfo['brackets']
                 startlen, endlen = len(wraps[0]), len(wraps[1])
                 if tag[:startlen] == wraps[0] and tag[-endlen-1:] == wraps[1]:
                     tags.append(

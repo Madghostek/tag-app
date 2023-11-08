@@ -142,15 +142,15 @@ class TagManager():
 
     def merge_tags(self, tags):
         for img in tags:
-            if img in self._tags:
-                self._tags[img.hash] |= tags[img.hash]
+            if img.hash in self._tags:
+                self._tags[img.hash] |= set(tags[img])
             else:
-                self._tags[img.hash] = tags[img.hash]
+                self._tags[img.hash] = set(tags[img])
         self.stale = True
 
     def overwrite_tags(self, tags):
         for img in tags:
-            self._tags[img.hash] = tags[img.hash]
+            self._tags[img.hash] = set(tags[img])
         self.stale = True
 
     def get_tags(self, targetImg) -> list:
