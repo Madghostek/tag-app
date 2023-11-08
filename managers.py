@@ -64,7 +64,8 @@ class ImageManager():
         return iter(self.collection)
     
     def renameImage(self, image: Img, newName):
-        # rename in filesystem, but remember in logs for rollback
+        if not newName:
+            newName = f"no tags ({image.hash})"
         ext = os.path.splitext(image.fname)[1]
         os.rename(image.fname, newName+ext)
 

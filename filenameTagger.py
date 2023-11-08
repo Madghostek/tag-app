@@ -38,9 +38,10 @@ class FilenameTagger():
             for tagtype, taginfo in self.tagtypes.items():
                 wraps = taginfo['brackets']
                 startlen, endlen = len(wraps[0]), len(wraps[1])
-                if tag[:startlen] == wraps[0] and tag[-endlen-1:] == wraps[1]:
+                if tag[:startlen] == wraps[0] and tag[-endlen:] == wraps[1]:
                     tags.append(
-                        Tag(tag[startlen:-endlen-1], tagtype))
+                        Tag(tag[startlen:-endlen], tagtype))
+                    break
             else:
                 tags.append(Tag(tag))
 
