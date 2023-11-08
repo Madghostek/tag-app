@@ -59,6 +59,7 @@ def main():
     if MImages.err:
         print("No images found")
     MTags = TagManager(os.getcwd())
+    MTags.register_tag_change_callback(lambda: window['tags'].update(list(MTags.get_tags(MImages.current()))))
     tagger = FilenameTagger()
 
     window = windowInit(MImages, MTags, tagger)
@@ -88,7 +89,6 @@ def main():
             try:
                 MImages.prev() if event == "Prev" else MImages.next()
                 window['img'].update(MImages.currentBytes().getvalue())
-                window['tags'].update(list(MTags.get_tags(MImages.current())))
             except NoImagesException:
                 logging.info("Cannot move between images, because there are none.")
 
@@ -97,21 +97,17 @@ def main():
             value = window['new_tag_value'].get()
             type = window['new_tag_type'].get()
             MTags.add_tag(MImages.current(), value, type)
-            window['tags'].update(list(MTags.get_tags(MImages.current())))
         elif event == "remove_tag":
             selected = window['tags'].get()
             print("Removing:", selected)
             MTags.remove_tags(MImages.current(), selected)
-            window['tags'].update(list(MTags.get_tags(MImages.current())))
 
         elif event == "Filenames to tags... (Merge)":
             tags = tagger.parse_tags(MImages)
             MTags.merge_tags(tags)
-            window['tags'].update(list(MTags.get_tags(MImages.current())))
         elif event == "Filenames to tags... (Overwrite)":
             tags = tagger.parse_tags(MImages)
             MTags.overwrite_tags(tags)
-            window['tags'].update(list(MTags.get_tags(MImages.current())))
         elif event == "Apply tag changes...":
             MTags.write_tags_to_filenames(MImages, tagger)
 

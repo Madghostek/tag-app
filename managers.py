@@ -10,6 +10,7 @@ from exceptions import NoImagesException
 
 from filenameTagger import FilenameTagger
 
+
 class ImageManager():
     supported_images = ['png', 'jpg', 'jpeg', 'gif']
     collection = []
@@ -70,6 +71,8 @@ class TagManager():
     because filename can change.
     """
 
+    tagChangedCallback = None
+
     def __init__(self, workingDir="./"):
         # this is the master tag storage, any up to date tag must be here
         # dict {image: Tag}
@@ -77,6 +80,17 @@ class TagManager():
         self._workingDir = workingDir
         self._tags = self.load_tags_file()
 
+    # decorator
+    def ChangesTags(func):
+
+        def wrapper_func(self, *args, **kwargs):
+            ret = func(self, *args, **kwargs)
+            if self.tagChangedCallback:
+                self.tagChangedCallback()
+            return ret
+        return wrapper_func
+
+    @ChangesTags
     def load_tags_file(self, tagsname="tags.json") -> dict:
         tags = {}
         try:
@@ -124,6 +138,7 @@ class TagManager():
         print(f"Saved tags to '{self._workingDir+tagsname}'")
         self.stale = False
 
+    @ChangesTags
     def add_tag(self, targetImg, tag_value, tag_type):
         tag = Tag(tag_value, tag_type)
         if targetImg.hash in self._tags:
@@ -132,6 +147,7 @@ class TagManager():
             self._tags[targetImg.hash] = set([tag])
         self.stale = True
 
+    @ChangesTags
     def remove_tags(self, targetImg, targetTags: list[Tag]):
         for toRemove in targetTags:
             for validTag in self._tags[targetImg.hash]:
@@ -140,6 +156,7 @@ class TagManager():
                     break  # no other tag will match
         self.stale = True
 
+    @ChangesTags
     def merge_tags(self, tags):
         for img in tags:
             if img.hash in self._tags:
@@ -148,10 +165,14 @@ class TagManager():
                 self._tags[img.hash] = set(tags[img])
         self.stale = True
 
+    @ChangesTags
     def overwrite_tags(self, tags):
         for img in tags:
             self._tags[img.hash] = set(tags[img])
         self.stale = True
+
+    def register_tag_change_callback(self, callback: callable):
+        self.tagChangedCallback = callback
 
     def get_tags(self, targetImg) -> list:
         return self._tags[targetImg.hash] if targetImg.hash in self._tags else []
